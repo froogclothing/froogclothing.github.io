@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Reminders Precision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --text: #ffffff;
+            --accent: #ffffff;
+            --panel: #121212;
+            --panel-text: #ffffff;
+            --dot-dim: rgba(255, 255, 255, 0.05);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.theme-red {
+            --bg: #ff3b30;
+            --text: #ffffff;
+            --accent: #ffffff;
+            --panel: #ffffff;
+            --panel-text: #ff3b30;
+            --dot-dim: rgba(255, 255, 255, 0.2);
+        }
+
+        body.theme-vintage {
+            --bg: #e2e4d8;
+            --text: #2d2d2a;
+            --accent: #e67e5d;
+            --panel: #2d2d2a;
+            --panel-text: #e2e4d8;
+            --dot-dim: rgba(45, 45, 42, 0.08);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+            height: 100dvh;
+            margin: 0;
+            transition: background-color 0.6s var(--ease-out-expo), color 0.6s var(--ease-out-expo);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            height: 100%;
+            padding: env(safe-area-inset-top) 24px 0;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .matrix-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.05));
+        }
+
+        .matrix-digit {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            width: 42px;
+        }
+
+        .dot {
+            aspect-ratio: 1/1;
+            width: 100%;
+            border-radius: 1px;
+            background: var(--dot-dim);
+            transition: background 0.1s linear, box-shadow 0.1s linear;
+        }
+
+        .dot.on {
+            background: var(--text);
+            box-shadow: 0 0 8px var(--text);
+        }
+
+        .reminder-list {
+            overflow-y: auto;
+            padding: 20px 0;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+        }
+
+        .reminder-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        body.theme-red .reminder-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body.theme-vintage .reminder-item {
+            background: rgba(45, 45, 42, 0.05);
+            border-color: rgba(45, 45, 42, 0.1);
+        }
+
+        .check-circle {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--text);
+            border-radius: 50%;
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .check-circle.filled::after {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: var(--text);
+            border-radius: 50%;
+        }
+
+        .reminder-text {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        .control-panel {
+            background: var(--panel);
+            border-radius: 32px 32px 0 0;
+            color: var(--panel-text);
+            padding: 32px 32px calc(32px + env(safe-area-inset-bottom));
+            margin: 0 -24px;
+            box-shadow: 0 -20px 50px rgba(0,0,0,0.3);
+        }
+
+        input {
+            background: rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.1);
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            color: var(--panel-text);
+            font-family: inherit;
+            font-weight: 700;
+            outline: none;
+            margin-bottom: 20px;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        
+        .theme-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .theme-dot.active { border-color: var(--panel-text); }
+
+        #status-bar {
+            position: fixed;
+            bottom: 4px;
+            right: 10px;
+            font-size: 8px;
+            opacity: 0.3;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header class="flex justify-between items-center pt-8 pb-4">
+            <div class="text-[10px] font-bold uppercase tracking-[0.5em] opacity-40">Reminders</div>
+            <div class="text-[10px] font-black uppercase tracking-[0.5em] opacity-80" id="item-count">00 ITEMS</div>
+        </header>
+
+        <div class="matrix-display" id="matrix-display"></div>
+
+        <div class="reminder-list" id="reminder-list"></div>
+
+        <div class="control-panel">
+            <input type="text" id="new-reminder" placeholder="ADD TASK..." autocomplete="off">
+            
+            <div class="flex gap-3">
+                <button class="bg-[var(--panel-text)] text-[var(--panel)] w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-widest" id="add-btn">Append Task</button>
+            </div>
+
+            <div class="theme-selector">
+                <div class="theme-dot bg-[#050505] active" onclick="setTheme('precision', this)"></div>
+                <div class="theme-dot bg-[#ff3b30]" onclick="setTheme('red', this)"></div>
+                <div class="theme-dot bg-[#e2e4d8]" onclick="setTheme('vintage', this)"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-bar">Auth: Initializing</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBai5LF1q1gChBA8Vy4AfBn5AlJTHPjpoM",
+            authDomain: "awesome-ecosystem.firebaseapp.com",
+            projectId: "awesome-ecosystem",
+            storageBucket: "awesome-ecosystem.firebasestorage.app",
+            messagingSenderId: "303617390063",
+            appId: "1:303617390063:web:e4d077c5a72cad4064721a"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Define appId for path logic
+        const appId = 'reminders-precision';
+
+        const DIGITS = {
+            '0': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,1,1,1,1],
+            '1': [0,0,1,0,0, 0,1,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
+            '2': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
+            '3': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '4': [1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,0,1],
+            '5': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '6': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '7': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 0,1,0,0,0],
+            '8': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '9': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1]
+        };
+
+        let reminders = [];
+        let currentUser = null;
+
+        function createMatrix() {
+            const matrix = document.getElementById('matrix-display');
+            matrix.innerHTML = '';
+            for (let i = 0; i < 2; i++) {
+                const digit = document.createElement('div');
+                digit.className = 'matrix-digit';
+                for (let j = 0; j < 35; j++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    digit.appendChild(dot);
+                }
+                matrix.appendChild(digit);
+            }
+        }
+
+        function updateMatrix() {
+            const count = reminders.filter(r => !r.done).length;
+            const str = count.toString().padStart(2, '0');
+            const digits = document.querySelectorAll('.matrix-digit');
+            
+            str.split('').forEach((char, idx) => {
+                if (!digits[idx]) return;
+                const dots = digits[idx].querySelectorAll('.dot');
+                const map = DIGITS[char];
+                dots.forEach((dot, dIdx) => {
+                    dot.classList.toggle('on', map[dIdx] === 1);
+                });
+            });
+            document.getElementById('item-count').textContent = `${str} ITEMS`;
+        }
+
+        function renderReminders() {
+            const list = document.getElementById('reminder-list');
+            list.innerHTML = '';
+            reminders.forEach((r) => {
+                const item = document.createElement('div');
+                item.className = 'reminder-item';
+                if (r.done) item.style.opacity = '0.3';
+                
+                const checkCircle = document.createElement('div');
+                checkCircle.className = `check-circle ${r.done ? 'filled' : ''}`;
+                checkCircle.onclick = () => toggleDone(r.id, r.done);
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'reminder-text';
+                textDiv.textContent = (r.text || "").toUpperCase();
+                
+                item.appendChild(checkCircle);
+                item.appendChild(textDiv);
+                list.appendChild(item);
+            });
+            updateMatrix();
+        }
+
+        async function addReminder(text) {
+            if (!text.trim() || !currentUser) return;
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reminders');
+                await setDoc(doc(colRef), {
+                    text: text,
+                    done: false,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) { 
+                console.error("Add failed:", err);
+            }
+        }
+
+        async function toggleDone(id, currentStatus) {
+            if (!currentUser) return;
+            try {
+                const reminderRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'reminders', id);
+                await updateDoc(reminderRef, { done: !currentStatus });
+            } catch (err) { 
+                console.error("Update failed:", err);
+            }
+        }
+
+        window.setTheme = function(theme, el) {
+            document.body.classList.remove('theme-red', 'theme-vintage');
+            if (theme !== 'precision') document.body.classList.add(`theme-${theme}`);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            if (el) el.classList.add('active');
+        };
+
+        document.getElementById('add-btn').onclick = () => {
+            const input = document.getElementById('new-reminder');
+            addReminder(input.value);
+            input.value = '';
+        };
+
+        document.getElementById('new-reminder').onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                addReminder(e.target.value);
+                e.target.value = '';
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('status-bar').textContent = "Auth: Active (" + user.uid.substring(0,6) + ")";
+                const q = collection(db, 'artifacts', appId, 'users', user.uid, 'reminders');
+                onSnapshot(q, (snapshot) => {
+                    reminders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    reminders.sort((a, b) => {
+                        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0);
+                        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0);
+                        return tB - tA;
+                    });
+                    renderReminders();
+                }, (error) => {
+                    document.getElementById('status-bar').textContent = "Firestore: Permission Denied";
+                    console.error("Rule Mismatch:", error);
+                });
+            } else {
+                signInAnonymously(auth).catch(err => {
+                    document.getElementById('status-bar').textContent = "Auth: Connection Blocked";
+                });
+            }
+        });
+
+        window.onload = () => {
+            createMatrix();
+        };
+    </script>
+</body>
+</html>

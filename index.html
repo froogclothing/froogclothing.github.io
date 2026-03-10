@@ -3,414 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Chronos Precision</title>
-    <link rel="manifest" href="data:application/manifest+json,{'name':'Chronos','short_name':'Chronos','start_url':'.','display':'standalone','background_color':'#050505','theme_color':'#050505'}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #050505;
-            --surface: #121212;
-            --accent: #ffffff;
-            --dim: #262626;
-            --safe-top: env(safe-area-inset-top);
+            --bg: #000000;
+            --text: #f2f2f2;
+            --accent: #ff3b30;
+            --panel: #ffffff;
+            --panel-text: #000000;
+            --dot-dim: rgba(255, 255, 255, 0.05);
         }
+
+        body.theme-budget {
+            --bg: #c5c9b8;
+            --text: #1c1c1e;
+            --accent: #e67e5d;
+            --panel: #d1d5c4;
+            --panel-text: #1c1c1e;
+            --dot-dim: rgba(0, 0, 0, 0.05);
+        }
+
+        body.theme-matrix {
+            --bg: #000000;
+            --text: #ffffff;
+            --accent: #00ff41;
+            --panel: #111111;
+            --panel-text: #ffffff;
+            --dot-dim: rgba(0, 255, 65, 0.05);
+        }
+
         body {
             background-color: var(--bg);
-            color: var(--accent);
-            font-family: system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            touch-action: none;
+            height: 100dvh;
             margin: 0;
-            user-select: none;
-            -webkit-user-select: none;
+            transition: background-color 0.4s ease;
         }
-        .timer-ring-container {
+
+        .main-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100%;
+            padding: env(safe-area-inset-top) 24px 0;
+        }
+
+        /* Dot Matrix Display */
+        .matrix-display {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .matrix-digit {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            width: 50px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--dot-dim);
+            transition: background 0.2s ease;
+        }
+
+        .dot.on {
+            background: var(--text);
+            box-shadow: 0 0 8px var(--text);
+        }
+
+        .matrix-colon {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .colon-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text);
+        }
+
+        .hero-circle {
             position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
         }
-        .timer-ring {
-            pointer-events: none;
-            width: 100%;
-            height: auto;
-            max-width: 400px;
-        }
-        .font-numeric {
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.05em;
-        }
-        .center-group {
+
+        .disk-progress-svg {
             position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
+            inset: 0;
             width: 100%;
-            text-align: center;
-            z-index: 10;
+            height: 100%;
+            transform: rotate(-90deg);
         }
-        .wheel-container {
-            height: 120px;
+
+        .disk-progress-path {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 4px;
+            stroke-dasharray: 911; 
+            stroke-dashoffset: 911;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        .balance-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(128, 128, 128, 0.1);
+            border-radius: 10px;
+            margin-top: 40px;
             overflow: hidden;
-            position: relative;
-            mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
-            cursor: ns-resize;
         }
-        .wheel-track {
+
+        .balance-fill {
+            height: 100%;
+            background: var(--text);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .control-panel {
+            background: var(--panel);
+            border-radius: 40px 40px 0 0;
+            color: var(--panel-text);
+            padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+            margin: 0 -24px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch {
+            background: rgba(0,0,0,0.08);
+            border-radius: 100px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            will-change: transform;
+            padding: 6px;
+            position: relative;
+            cursor: pointer;
         }
-        .wheel-item {
-            height: 40px;
+        
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 14px 0;
+            z-index: 2;
+            transition: color 0.3s;
+            color: var(--panel-text);
+            opacity: 0.5;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: calc(50% - 6px);
+            height: calc(100% - 12px);
+            background: var(--panel-text);
+            border-radius: 100px;
+            z-index: 1;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .toggle-switch.is-break .toggle-slider { transform: translateX(100%); }
+        .toggle-switch.is-break .toggle-option:nth-child(2) { color: var(--panel); opacity: 1; }
+        .toggle-switch:not(.is-break) .toggle-option:nth-child(1) { color: var(--panel); opacity: 1; }
+
+        .wheel-box {
+            height: 120px;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+        }
+        
+        .wheel-item { 
+            height: 40px; 
+            scroll-snap-align: center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.8rem;
+            font-weight: 700;
+            opacity: 0.1; 
+            color: var(--panel-text);
+        }
+        
+        .wheel-item.active { opacity: 1; transform: scale(1.15); }
+
+        .btn-main {
+            background: var(--panel-text);
+            color: var(--panel);
+            width: 100%;
+            padding: 24px;
+            border-radius: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+
+        .mic-btn {
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(128,128,128,0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--dim);
-            transition: color 0.2s ease, transform 0.2s ease;
+            border: none;
         }
-        .wheel-item.active {
-            color: var(--accent);
-            transform: scale(1.1);
+        
+        .mic-btn.listening { 
+            background: var(--accent); 
+            animation: pulse 1.5s infinite; 
         }
-        .glass-panel {
-            background: rgba(18, 18, 18, 0.7);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
-        .tick {
-            stroke: var(--dim);
-            stroke-width: 0.5;
-            transition: stroke 0.2s, stroke-width 0.2s;
-        }
-        .tick.active {
-            stroke: var(--accent);
-            stroke-width: 1.2;
-        }
-        .ball {
-            fill: var(--accent);
-            transition: r 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #fluid-fill {
-            fill: var(--accent);
-            opacity: 0.15;
-            transition: transform 0.1s linear;
-            transform-origin: center;
-        }
-        #progress-path {
-            transition: stroke-dashoffset 0.1s linear;
-            transform: rotate(-90deg);
-            transform-origin: center;
-        }
-        .pulse {
-            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse-ring {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+
+        .streak-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 80px;
+            font-weight: 900;
+            color: rgba(128,128,128,0.05);
+            line-height: 0.8;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div class="relative flex flex-col items-center justify-between w-full h-full p-6 pb-10" style="padding-top: calc(var(--safe-top) + 24px)">
-        <div class="w-full flex justify-between items-center px-4 z-50">
-            <h1 class="text-[10px] uppercase tracking-[0.4em] text-neutral-500 font-bold">Chronos Precision</h1>
-            <select id="theme-selector" class="bg-transparent text-[10px] uppercase tracking-widest text-neutral-400 border-none outline-none cursor-pointer">
-                <option value="classic">Classic</option>
-                <option value="fluid">Fluid</option>
-                <option value="balls">Orbits</option>
-            </select>
-        </div>
 
-        <div class="timer-ring-container flex-1">
-            <svg id="timer-svg" class="timer-ring" viewBox="0 0 100 100">
-                <circle id="fluid-fill" cx="50" cy="50" r="48" class="hidden" />
-                <g id="ticks-group"></g>
-                <circle id="bg-path" cx="50" cy="50" r="48" fill="none" stroke="var(--dim)" stroke-width="0.3" style="transform: rotate(-90deg); transform-origin: center;" />
-                <circle id="progress-path" cx="50" cy="50" r="48" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="301.6" stroke-dashoffset="301.6" stroke-linecap="round" />
-                <g id="balls-group" class="hidden"></g>
-            </svg>
-            <div class="center-group">
-                <div id="display" class="text-7xl font-bold font-numeric transition-all duration-500">00:00</div>
-                <div id="eta-display" class="text-[10px] uppercase tracking-widest text-neutral-500 mt-4 opacity-0 h-4">Finishing at --:--</div>
-            </div>
-        </div>
+    <div class="main-container">
+        <header class="flex justify-between items-center py-6">
+            <div class="text-[10px] font-black uppercase tracking-[0.3em]">Chronos</div>
+            <div class="text-[10px] font-black uppercase tracking-[0.3em]" id="status-mode">Ready</div>
+        </header>
 
-        <div id="selector-ui" class="w-full grid grid-cols-2 gap-4 mb-8 max-w-sm">
-            <div class="flex flex-col items-center">
-                <span class="text-[9px] uppercase tracking-widest text-neutral-500 mb-2">Minutes</span>
-                <div class="wheel-container w-full glass-panel rounded-3xl" id="min-wheel">
-                    <div class="wheel-track" id="min-track"></div>
+        <div class="flex flex-col items-center justify-center relative">
+            <button class="mic-btn" id="voice-input">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+            </button>
+            
+            <div class="hero-circle" id="tap-target">
+                <svg class="disk-progress-svg" viewBox="0 0 320 320">
+                    <circle class="disk-progress-path" cx="160" cy="160" r="145" id="progress-disk" />
+                </svg>
+                
+                <div class="matrix-display" id="matrix-display">
+                    <!-- Digits injected by JS -->
                 </div>
             </div>
-            <div class="flex flex-col items-center">
-                <span class="text-[9px] uppercase tracking-widest text-neutral-500 mb-2">Seconds</span>
-                <div class="wheel-container w-full glass-panel rounded-3xl" id="sec-wheel">
-                    <div class="wheel-track" id="sec-track"></div>
-                </div>
+
+            <div class="w-full px-12">
+                <div class="balance-bar"><div class="balance-fill" id="balance-fill"></div></div>
             </div>
+            
+            <div class="streak-counter" id="streak-display">00</div>
         </div>
 
-        <div class="w-full flex flex-col gap-4 max-w-sm">
-            <div class="flex gap-3">
-                <button id="toggle-btn" class="flex-[3] bg-white text-black font-black py-5 rounded-3xl active:scale-95 transition-all duration-300 text-sm tracking-[0.2em] uppercase shadow-lg shadow-white/5">Start</button>
-                <button id="reset-btn" class="flex-1 bg-neutral-900/50 border border-neutral-800/50 font-bold py-5 rounded-3xl active:scale-95 transition-all flex items-center justify-center text-white backdrop-blur-md">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                </button>
+        <div class="control-panel">
+            <div class="toggle-switch mb-8" id="mode-toggle">
+                <div class="toggle-slider"></div>
+                <div class="toggle-option">FOCUS</div>
+                <div class="toggle-option">BREAK</div>
+            </div>
+            
+            <div class="flex items-center justify-center gap-8 mb-6">
+                <div class="flex flex-col items-center">
+                    <span class="text-[9px] font-black opacity-40 mb-3 tracking-widest">MINS</span>
+                    <div class="wheel-box w-20" id="wheel-min"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
+                </div>
+                <div class="text-4xl font-black pb-4 opacity-20">:</div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[9px] font-black opacity-40 mb-3 tracking-widest">SECS</span>
+                    <div class="wheel-box w-20" id="wheel-sec"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
+                </div>
+            </div>
+
+            <button class="btn-main" id="start-btn">Initiate Sequence</button>
+
+            <div class="flex gap-4 justify-center mt-8">
+                <div class="w-3 h-3 rounded-full bg-[#ff3b30] cursor-pointer" onclick="setTheme('precision')"></div>
+                <div class="w-3 h-3 rounded-full bg-[#e67e5d] cursor-pointer" onclick="setTheme('budget')"></div>
+                <div class="w-3 h-3 rounded-full bg-[#00ff41] cursor-pointer" onclick="setTheme('matrix')"></div>
             </div>
         </div>
     </div>
 
     <script>
-        let timeLeft = 0, totalTime = 0, timerInterval = null, isRunning = false, isComplete = false, currentTheme = 'classic';
-        let selectedMin = 0, selectedSec = 0;
-        const STROKE_DASH = 301.6;
+        const DIGITS = {
+            '0': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1],
+            '1': [0,0,1,0,0, 0,1,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
+            '2': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
+            '3': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '4': [1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,0,1],
+            '5': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '6': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '7': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 0,1,0,0,0, 0,1,0,0,0],
+            '8': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '9': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1]
+        };
 
-        const display = document.getElementById('display');
-        const etaDisplay = document.getElementById('eta-display');
-        const progressPath = document.getElementById('progress-path');
-        const bgPath = document.getElementById('bg-path');
-        const fluidFill = document.getElementById('fluid-fill');
-        const toggleBtn = document.getElementById('toggle-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const selectorUI = document.getElementById('selector-ui');
-        const ticksGroup = document.getElementById('ticks-group');
-        const ballsGroup = document.getElementById('balls-group');
-        const themeSelector = document.getElementById('theme-selector');
+        const state = {
+            ms: 0,
+            initialMs: 0,
+            isRunning: false,
+            isBreak: false,
+            streak: 0,
+            mins: 25,
+            secs: 0,
+            lastTick: 0
+        };
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const UI = {
+            matrix: document.getElementById('matrix-display'),
+            progress: document.getElementById('progress-disk'),
+            balance: document.getElementById('balance-fill'),
+            streak: document.getElementById('streak-display'),
+            status: document.getElementById('status-mode'),
+            startBtn: document.getElementById('start-btn'),
+            modeToggle: document.getElementById('mode-toggle'),
+            micBtn: document.getElementById('voice-input'),
+            wheelMin: document.getElementById('wheel-min'),
+            wheelSec: document.getElementById('wheel-sec')
+        };
 
-        function playClick(freq = 150, type = 'sine', volume = 0.05) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-            if ('vibrate' in navigator) navigator.vibrate(5);
-        }
-
-        function initTicks() {
-            ticksGroup.innerHTML = '';
-            for (let i = 0; i < 60; i++) {
-                // -90 degrees puts index 0 at the 12 o'clock position
-                const angle = (i * 6 - 90) * (Math.PI / 180);
-                const x1 = 50 + 46 * Math.cos(angle);
-                const y1 = 50 + 46 * Math.sin(angle);
-                const x2 = 50 + (i % 5 === 0 ? 41 : 43) * Math.cos(angle);
-                const y2 = 50 + (i % 5 === 0 ? 41 : 43) * Math.sin(angle);
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-                line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-                line.setAttribute("class", "tick");
-                ticksGroup.appendChild(line);
-            }
-        }
-
-        function initBalls() {
-            ballsGroup.innerHTML = '';
-            for (let i = 0; i < 12; i++) {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("r", "1.5");
-                circle.setAttribute("class", "ball");
-                ballsGroup.appendChild(circle);
-            }
-        }
-
-        function updateDisplay() {
-            const mins = Math.floor(timeLeft / 60000);
-            const secs = Math.ceil((timeLeft % 60000) / 1000);
-            display.textContent = `${mins.toString().padStart(2, '0')}:${(secs >= 60 ? 0 : (secs < 0 ? 0 : secs)).toString().padStart(2, '0')}`;
-            
-            const percent = totalTime > 0 ? timeLeft / totalTime : 0;
-            
-            if (currentTheme === 'classic') {
-                progressPath.style.strokeDashoffset = STROKE_DASH - percent * STROKE_DASH;
-                const lines = ticksGroup.querySelectorAll('.tick');
-                const activeCount = Math.floor(percent * 60);
-                lines.forEach((l, i) => {
-                    l.classList.toggle('active', i <= activeCount);
-                });
-            } else if (currentTheme === 'fluid') {
-                fluidFill.style.transform = `scale(${percent})`;
-                progressPath.style.strokeDashoffset = STROKE_DASH - percent * STROKE_DASH;
-            } else if (currentTheme === 'balls') {
-                const balls = ballsGroup.querySelectorAll('.ball');
-                balls.forEach((b, i) => {
-                    const angle = ((i / 12) * 360 - 90) * (Math.PI / 180);
-                    b.setAttribute("cx", 50 + 48 * Math.cos(angle));
-                    b.setAttribute("cy", 50 + 48 * Math.sin(angle));
-                    b.setAttribute("r", percent >= i/12 ? 2.5 : 0.8);
-                    b.style.opacity = percent >= i/12 ? 1 : 0.3;
-                });
-            }
-        }
-
-        function setupWheel(containerId, trackId, limit, callback) {
-            const container = document.getElementById(containerId), track = document.getElementById(trackId), itemHeight = 40;
-            let currentOffset = 0, startY = 0, startOffset = 0, isDragging = false;
-            
-            track.innerHTML = '';
-            for (let i = -1; i <= limit; i++) {
-                const d = document.createElement('div');
-                d.className = 'wheel-item';
-                d.textContent = (i < 0 ? limit + i : i % limit).toString().padStart(2, '0');
-                track.appendChild(d);
-            }
-            
-            const update = (anim = true) => {
-                const targetY = -(currentOffset * itemHeight) + (itemHeight);
-                if (anim) anime({ targets: track, translateY: targetY, duration: 400, easing: 'easeOutQuart' });
-                else track.style.transform = `translateY(${targetY}px)`;
-                Array.from(track.children).forEach((c, i) => c.classList.toggle('active', i === Math.round(currentOffset) + 1));
-                callback(Math.round(currentOffset));
-            };
-
-            const startDrag = (y) => {
-                if (isRunning || isComplete) return;
-                isDragging = true;
-                startY = y;
-                startOffset = currentOffset;
-                anime.remove(track);
-            };
-
-            const moveDrag = (y) => {
-                if (!isDragging) return;
-                const delta = (startY - y) / itemHeight;
-                const prev = Math.round(currentOffset);
-                currentOffset = Math.max(0, Math.min(limit - 1, startOffset + delta));
-                if (Math.round(currentOffset) !== prev) playClick(120, 'sine', 0.02);
-                update(false);
-            };
-
-            const endDrag = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                currentOffset = Math.round(currentOffset);
-                update(true);
-            };
-
-            container.addEventListener('touchstart', e => startDrag(e.touches[0].clientY), { passive: true });
-            container.addEventListener('touchmove', e => { moveDrag(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-            container.addEventListener('touchend', endDrag);
-
-            container.addEventListener('mousedown', e => startDrag(e.clientY));
-            window.addEventListener('mousemove', e => moveDrag(e.clientY));
-            window.addEventListener('mouseup', endDrag);
-
-            container.addEventListener('wheel', e => {
-                if (isRunning || isComplete) return;
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? 1 : -1;
-                const prev = Math.round(currentOffset);
-                currentOffset = Math.max(0, Math.min(limit - 1, currentOffset + delta));
-                if (Math.round(currentOffset) !== prev) {
-                    playClick(120, 'sine', 0.02);
-                    update(true);
+        function createMatrix() {
+            UI.matrix.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                const digit = document.createElement('div');
+                digit.className = 'matrix-digit';
+                for (let j = 0; j < 35; j++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    digit.appendChild(dot);
                 }
-            }, { passive: false });
-            
-            update(false);
+                UI.matrix.appendChild(digit);
+                if (i === 1) {
+                    const colon = document.createElement('div');
+                    colon.className = 'matrix-colon';
+                    colon.innerHTML = '<div class="colon-dot"></div><div class="colon-dot"></div>';
+                    UI.matrix.appendChild(colon);
+                }
+            }
         }
 
-        function updateETA() {
-            if (timeLeft <= 0) { etaDisplay.style.opacity = 0; return; }
-            const f = new Date(Date.now() + timeLeft);
-            etaDisplay.textContent = `Finishing at ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}`;
-            etaDisplay.style.opacity = 1;
+        function updateMatrix(timeStr) {
+            const cleanStr = timeStr.replace(':', '');
+            const digits = UI.matrix.querySelectorAll('.matrix-digit');
+            cleanStr.split('').forEach((char, idx) => {
+                const dots = digits[idx].querySelectorAll('.dot');
+                const map = DIGITS[char];
+                dots.forEach((dot, dIdx) => {
+                    dot.classList.toggle('on', map[dIdx] === 1);
+                });
+            });
         }
 
-        function startTimer() {
-            isRunning = true; isComplete = false; toggleBtn.textContent = 'Pause';
-            toggleBtn.classList.replace('bg-white', 'bg-neutral-900'); toggleBtn.classList.replace('text-black', 'text-white');
-            updateETA();
-            anime({ targets: selectorUI, opacity: 0.1, scale: 0.95, filter: 'blur(4px)', duration: 800, easing: 'easeOutExpo' });
+        function buildWheel(el, count, stateKey) {
+            const track = el.querySelector('.track');
+            for (let i = 0; i < count; i++) {
+                const item = document.createElement('div');
+                item.className = 'wheel-item';
+                item.textContent = i.toString().padStart(2, '0');
+                track.appendChild(item);
+            }
+
+            el.addEventListener('scroll', () => {
+                const index = Math.round(el.scrollTop / 40);
+                const items = track.querySelectorAll('.wheel-item');
+                items.forEach((item, i) => item.classList.toggle('active', i === index));
+                state[stateKey] = index;
+                if (!state.isRunning) {
+                    state.ms = (state.mins * 60 + state.secs) * 1000;
+                    render();
+                }
+            }, { passive: true });
+        }
+
+        function render() {
+            const totalSeconds = Math.ceil(state.ms / 1000);
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             
-            let last = performance.now();
-            const tick = (now) => {
-                if (!isRunning) return;
-                const delta = now - last; last = now;
-                const oldSec = Math.floor(timeLeft / 1000);
-                timeLeft -= delta;
-                if (Math.floor(timeLeft / 1000) !== oldSec && timeLeft > 0) playClick(80, 'sine', 0.01);
-                if (timeLeft <= 0) { timeLeft = 0; completeTimer(); return; }
-                updateDisplay(); 
-                timerInterval = requestAnimationFrame(tick);
+            updateMatrix(timeStr);
+            UI.streak.textContent = state.streak.toString().padStart(2, '0');
+            UI.status.textContent = state.isRunning ? (state.isBreak ? 'BREAK' : 'FOCUS') : 'READY';
+            
+            const progress = state.initialMs > 0 ? (state.ms / state.initialMs) : 0;
+            UI.progress.style.strokeDashoffset = 911 - (progress * 911);
+            UI.balance.style.width = `${(1 - progress) * 100}%`;
+        }
+
+        function timerLoop() {
+            if (!state.isRunning) return;
+            const now = performance.now();
+            const delta = now - state.lastTick;
+            state.lastTick = now;
+            state.ms = Math.max(0, state.ms - delta);
+
+            if (state.ms <= 0) {
+                state.isRunning = false;
+                if (!state.isBreak) state.streak++;
+                UI.startBtn.textContent = "COMPLETE";
+                setTimeout(() => {
+                    UI.startBtn.textContent = "INITIATE";
+                    state.ms = (state.mins * 60 + state.secs) * 1000;
+                    render();
+                }, 2000);
+            }
+
+            render();
+            if (state.isRunning) requestAnimationFrame(timerLoop);
+        }
+
+        function handleStart() {
+            if (state.isRunning) {
+                state.isRunning = false;
+                UI.startBtn.textContent = "RESUME";
+            } else {
+                state.ms = (state.mins * 60 + state.secs) * 1000;
+                state.initialMs = state.ms;
+                if (state.ms > 0) {
+                    state.isRunning = true;
+                    state.lastTick = performance.now();
+                    UI.startBtn.textContent = "SUSPEND";
+                    requestAnimationFrame(timerLoop);
+                }
+            }
+        }
+
+        function setTheme(theme) {
+            document.body.classList.remove('theme-budget', 'theme-matrix');
+            if (theme !== 'precision') document.body.classList.add(`theme-${theme}`);
+        }
+
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const speech = Recognition ? new Recognition() : null;
+
+        if (speech) {
+            speech.onresult = (e) => {
+                const text = e.results[0][0].transcript.toLowerCase();
+                const num = text.match(/\d+/);
+                if (num) {
+                    const val = parseInt(num[0]);
+                    if (text.includes('minute')) {
+                        state.mins = val;
+                        UI.wheelMin.scrollTo({ top: val * 40, behavior: 'smooth' });
+                    } else if (text.includes('second')) {
+                        state.secs = val;
+                        UI.wheelSec.scrollTo({ top: val * 40, behavior: 'smooth' });
+                    }
+                    state.ms = (state.mins * 60 + state.secs) * 1000;
+                    render();
+                }
+                UI.micBtn.classList.remove('listening');
             };
-            timerInterval = requestAnimationFrame(tick);
         }
 
-        function pauseTimer() {
-            isRunning = false; cancelAnimationFrame(timerInterval);
-            toggleBtn.textContent = 'Resume'; toggleBtn.classList.replace('bg-neutral-900', 'bg-white'); toggleBtn.classList.replace('text-white', 'text-black');
-            anime({ targets: selectorUI, opacity: 1, scale: 1, filter: 'blur(0px)', duration: 600, easing: 'easeOutExpo' });
-        }
-
-        function resetTimer() {
-            isRunning = false; isComplete = false; cancelAnimationFrame(timerInterval);
-            timeLeft = (selectedMin * 60 + selectedSec) * 1000; totalTime = timeLeft;
-            toggleBtn.textContent = 'Start'; toggleBtn.classList.replace('bg-neutral-900', 'bg-white'); toggleBtn.classList.replace('text-white', 'text-black');
-            etaDisplay.style.opacity = 0; updateDisplay();
-            display.classList.remove('pulse');
-            anime({ targets: selectorUI, opacity: 1, scale: 1, filter: 'blur(0px)', duration: 600, easing: 'easeOutExpo' });
-        }
-
-        function completeTimer() {
-            isRunning = false; isComplete = true; updateDisplay(); toggleBtn.textContent = 'Reset';
-            etaDisplay.textContent = 'Timer Complete'; 
-            display.classList.add('pulse');
-            playClick(440, 'triangle', 0.1); 
-            setTimeout(() => playClick(660, 'triangle', 0.1), 150);
-        }
-
-        setupWheel('min-wheel', 'min-track', 100, v => { selectedMin = v; if (!isRunning && !isComplete) resetTimer(); });
-        setupWheel('sec-wheel', 'sec-track', 60, v => { selectedSec = v; if (!isRunning && !isComplete) resetTimer(); });
-        
-        toggleBtn.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (isComplete) resetTimer();
-            else isRunning ? pauseTimer() : (timeLeft > 0 && startTimer());
+        UI.startBtn.addEventListener('click', handleStart);
+        UI.modeToggle.addEventListener('click', () => {
+            state.isBreak = !state.isBreak;
+            UI.modeToggle.classList.toggle('is-break', state.isBreak);
+            render();
         });
         
-        resetBtn.addEventListener('click', resetTimer);
-        
-        themeSelector.addEventListener('change', (e) => {
-            currentTheme = e.target.value;
-            ticksGroup.classList.toggle('hidden', currentTheme !== 'classic');
-            fluidFill.classList.toggle('hidden', currentTheme !== 'fluid');
-            ballsGroup.classList.toggle('hidden', currentTheme !== 'balls');
-            progressPath.classList.toggle('hidden', currentTheme === 'balls');
-            bgPath.classList.toggle('hidden', currentTheme === 'balls');
-            
-            if (currentTheme === 'classic') progressPath.style.strokeWidth = 1.5;
-            else if (currentTheme === 'fluid') progressPath.style.strokeWidth = 1.0;
-
-            updateDisplay();
+        UI.micBtn.addEventListener('click', () => {
+            if (speech) {
+                UI.micBtn.classList.add('listening');
+                speech.start();
+            }
         });
+
+        document.getElementById('tap-target').addEventListener('click', handleStart);
 
         window.onload = () => {
-            initTicks();
-            initBalls();
-            updateDisplay();
+            createMatrix();
+            buildWheel(UI.wheelMin, 100, 'mins');
+            buildWheel(UI.wheelSec, 60, 'secs');
+            UI.wheelMin.scrollTo({ top: 25 * 40 });
+            render();
         };
     </script>
 </body>

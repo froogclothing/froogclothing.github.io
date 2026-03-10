@@ -5,33 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Chronos Precision</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #000000;
-            --text: #f2f2f2;
-            --accent: #ff3b30;
-            --panel: #ffffff;
-            --panel-text: #000000;
-            --dot-dim: rgba(255, 255, 255, 0.05);
-        }
-
-        body.theme-budget {
-            --bg: #c5c9b8;
-            --text: #1c1c1e;
-            --accent: #e67e5d;
-            --panel: #d1d5c4;
-            --panel-text: #1c1c1e;
-            --dot-dim: rgba(0, 0, 0, 0.05);
-        }
-
-        body.theme-matrix {
-            --bg: #000000;
+            --bg: #050505;
             --text: #ffffff;
-            --accent: #00ff41;
-            --panel: #111111;
+            --accent: #ffffff;
+            --panel: #121212;
             --panel-text: #ffffff;
-            --dot-dim: rgba(0, 255, 65, 0.05);
+            --dot-dim: rgba(255, 255, 255, 0.05);
+            --ring-bg: rgba(255, 255, 255, 0.08);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.theme-red {
+            --bg: #ff3b30;
+            --text: #ffffff;
+            --accent: #ffffff;
+            --panel: #ffffff;
+            --panel-text: #ff3b30;
+            --dot-dim: rgba(255, 255, 255, 0.2);
+            --ring-bg: rgba(255, 255, 255, 0.2);
+        }
+
+        body.theme-vintage {
+            --bg: #e2e4d8;
+            --text: #2d2d2a;
+            --accent: #e67e5d;
+            --panel: #2d2d2a;
+            --panel-text: #e2e4d8;
+            --dot-dim: rgba(45, 45, 42, 0.08);
+            --ring-bg: rgba(45, 45, 42, 0.05);
         }
 
         body {
@@ -42,7 +46,7 @@
             touch-action: none;
             height: 100dvh;
             margin: 0;
-            transition: background-color 0.4s ease;
+            transition: background-color 0.6s var(--ease-out-expo), color 0.6s var(--ease-out-expo);
         }
 
         .main-container {
@@ -50,30 +54,38 @@
             grid-template-rows: auto 1fr auto;
             height: 100%;
             padding: env(safe-area-inset-top) 24px 0;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
-        /* Dot Matrix Display */
         .matrix-display {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             justify-content: center;
             margin: 20px 0;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.05));
         }
 
         .matrix-digit {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-            width: 50px;
+            gap: 3px;
+            width: 42px;
+        }
+
+        .matrix-digit.mini {
+            width: 25px;
+            gap: 2px;
+            opacity: 0.6;
         }
 
         .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
+            aspect-ratio: 1/1;
+            width: 100%;
+            border-radius: 1px;
             background: var(--dot-dim);
-            transition: background 0.2s ease;
+            transition: background 0.1s linear, box-shadow 0.1s linear;
         }
 
         .dot.on {
@@ -85,111 +97,110 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            padding: 0 4px;
         }
 
         .colon-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
+            width: 5px;
+            height: 5px;
+            border-radius: 1px;
             background: var(--text);
+            box-shadow: 0 0 8px var(--text);
         }
 
-        .hero-circle {
+        .hero-area {
             position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .disk-progress-svg {
-            position: absolute;
-            inset: 0;
+        .balance-container {
             width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-
-        .disk-progress-path {
-            fill: none;
-            stroke: var(--accent);
-            stroke-width: 4px;
-            stroke-dasharray: 911; 
-            stroke-dashoffset: 911;
-            transition: stroke-dashoffset 0.1s linear;
+            margin-top: 20px;
+            padding: 0 32px;
         }
 
         .balance-bar {
             width: 100%;
-            height: 6px;
-            background: rgba(128, 128, 128, 0.1);
-            border-radius: 10px;
-            margin-top: 40px;
+            height: 3px;
+            background: var(--ring-bg);
+            border-radius: 2px;
             overflow: hidden;
+            display: flex;
         }
 
-        .balance-fill {
+        .balance-work {
             height: 100%;
             background: var(--text);
-            width: 0%;
-            transition: width 0.3s ease;
+            width: 50%;
+            transition: width 0.8s var(--ease-out-expo);
+        }
+
+        .balance-break {
+            height: 100%;
+            background: var(--accent);
+            width: 50%;
+            opacity: 0.3;
+            transition: width 0.8s var(--ease-out-expo);
         }
 
         .control-panel {
             background: var(--panel);
-            border-radius: 40px 40px 0 0;
+            border-radius: 32px 32px 0 0;
             color: var(--panel-text);
-            padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+            padding: 32px 32px calc(32px + env(safe-area-inset-bottom));
             margin: 0 -24px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 -20px 50px rgba(0,0,0,0.3);
         }
 
         .toggle-switch {
-            background: rgba(0,0,0,0.08);
-            border-radius: 100px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 16px;
             display: flex;
-            padding: 6px;
+            padding: 4px;
             position: relative;
             cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.05);
         }
         
         .toggle-option {
             flex: 1;
             text-align: center;
-            font-size: 12px;
-            font-weight: 900;
-            padding: 14px 0;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 12px 0;
             z-index: 2;
-            transition: color 0.3s;
+            transition: color 0.4s;
             color: var(--panel-text);
-            opacity: 0.5;
+            opacity: 0.4;
+            letter-spacing: 0.1em;
         }
         
         .toggle-slider {
             position: absolute;
-            top: 6px;
-            left: 6px;
-            width: calc(50% - 6px);
-            height: calc(100% - 12px);
-            background: var(--panel-text);
-            border-radius: 100px;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: rgba(0,0,0,0.1);
+            border-radius: 12px;
             z-index: 1;
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.5s var(--ease-out-expo);
         }
         
         .toggle-switch.is-break .toggle-slider { transform: translateX(100%); }
-        .toggle-switch.is-break .toggle-option:nth-child(2) { color: var(--panel); opacity: 1; }
-        .toggle-switch:not(.is-break) .toggle-option:nth-child(1) { color: var(--panel); opacity: 1; }
+        .toggle-switch.is-break .toggle-option:nth-child(2) { opacity: 1; }
+        .toggle-switch:not(.is-break) .toggle-option:nth-child(1) { opacity: 1; }
 
         .wheel-box {
             height: 120px;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
             scrollbar-width: none;
-            mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+            mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
         }
         
         .wheel-item { 
@@ -198,10 +209,11 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            opacity: 0.1; 
+            opacity: 0.15; 
             color: var(--panel-text);
+            transition: opacity 0.3s, transform 0.3s;
         }
         
         .wheel-item.active { opacity: 1; transform: scale(1.15); }
@@ -209,84 +221,111 @@
         .btn-main {
             background: var(--panel-text);
             color: var(--panel);
-            width: 100%;
-            padding: 24px;
-            border-radius: 24px;
-            font-weight: 900;
+            flex: 2;
+            padding: 20px;
+            border-radius: 16px;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 24px;
-            font-size: 14px;
+            letter-spacing: 0.2em;
+            font-size: 12px;
+            transition: opacity 0.2s;
         }
 
-        .mic-btn {
-            position: absolute;
-            right: 24px;
-            top: 24px;
-            width: 48px;
-            height: 48px;
+        .btn-secondary {
+            background: rgba(0,0,0,0.05);
+            color: var(--panel-text);
+            flex: 1;
+            padding: 20px;
+            border-radius: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        
+        .btn-secondary:active { transform: scale(0.95); }
+
+        .theme-selector {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 32px;
+            padding: 8px;
+        }
+        
+        .theme-dot {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: rgba(128,128,128,0.15);
+            cursor: pointer;
+            transition: transform 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo);
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: none;
+            border: 2px solid transparent;
         }
         
-        .mic-btn.listening { 
-            background: var(--accent); 
-            animation: pulse 1.5s infinite; 
+        .theme-dot.active { 
+            transform: scale(1.1);
+            border-color: var(--panel-text);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        .theme-dot::after {
+            content: '';
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: inherit;
         }
 
-        .streak-counter {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            font-size: 80px;
-            font-weight: 900;
-            color: rgba(128,128,128,0.05);
-            line-height: 0.8;
+        #toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--panel-text);
+            color: var(--panel);
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            transition: transform 0.5s var(--ease-out-expo);
+            z-index: 100;
             pointer-events: none;
         }
+        #toast.visible { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
+    <div id="toast">COPIED TO CLIPBOARD</div>
+
     <div class="main-container">
-        <header class="flex justify-between items-center py-6">
-            <div class="text-[10px] font-black uppercase tracking-[0.3em]">Chronos</div>
-            <div class="text-[10px] font-black uppercase tracking-[0.3em]" id="status-mode">Ready</div>
+        <header class="flex justify-between items-center pt-8 pb-4">
+            <div class="text-[10px] font-bold uppercase tracking-[0.5em] opacity-40">Precision</div>
+            <div class="text-[10px] font-black uppercase tracking-[0.5em] opacity-80" id="status-mode">Standby</div>
         </header>
 
         <div class="flex flex-col items-center justify-center relative">
-            <button class="mic-btn" id="voice-input">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                </svg>
-            </button>
-            
-            <div class="hero-circle" id="tap-target">
-                <svg class="disk-progress-svg" viewBox="0 0 320 320">
-                    <circle class="disk-progress-path" cx="160" cy="160" r="145" id="progress-disk" />
-                </svg>
-                
-                <div class="matrix-display" id="matrix-display">
-                    <!-- Digits injected by JS -->
-                </div>
+            <div class="hero-area" id="tap-target">
+                <div class="matrix-display" id="matrix-display"></div>
             </div>
 
-            <div class="w-full px-12">
-                <div class="balance-bar"><div class="balance-fill" id="balance-fill"></div></div>
+            <div class="balance-container">
+                <div class="flex justify-between text-[9px] font-bold opacity-40 mb-3 tracking-widest">
+                    <span id="work-total">00:00</span>
+                    <span id="break-total">00:00</span>
+                </div>
+                <div class="balance-bar">
+                    <div class="balance-work" id="balance-work"></div>
+                    <div class="balance-break" id="balance-break"></div>
+                </div>
             </div>
-            
-            <div class="streak-counter" id="streak-display">00</div>
         </div>
 
         <div class="control-panel">
@@ -296,38 +335,42 @@
                 <div class="toggle-option">BREAK</div>
             </div>
             
-            <div class="flex items-center justify-center gap-8 mb-6">
+            <div class="flex items-center justify-center gap-10 mb-8">
                 <div class="flex flex-col items-center">
-                    <span class="text-[9px] font-black opacity-40 mb-3 tracking-widest">MINS</span>
-                    <div class="wheel-box w-20" id="wheel-min"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
+                    <span class="text-[8px] font-black opacity-30 mb-2 tracking-[0.3em]">M</span>
+                    <div class="wheel-box w-16" id="wheel-min"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
                 </div>
-                <div class="text-4xl font-black pb-4 opacity-20">:</div>
+                <div class="text-xl font-bold pb-4 opacity-10">/</div>
                 <div class="flex flex-col items-center">
-                    <span class="text-[9px] font-black opacity-40 mb-3 tracking-widest">SECS</span>
-                    <div class="wheel-box w-20" id="wheel-sec"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
+                    <span class="text-[8px] font-black opacity-30 mb-2 tracking-[0.3em]">S</span>
+                    <div class="wheel-box w-16" id="wheel-sec"><div class="spacer h-[40px]"></div><div class="track"></div><div class="spacer h-[40px]"></div></div>
                 </div>
             </div>
 
-            <button class="btn-main" id="start-btn">Initiate Sequence</button>
+            <div class="flex gap-3 mt-4">
+                <button class="btn-secondary" id="reset-btn">Reset</button>
+                <button class="btn-main" id="start-btn">Start Session</button>
+                <button class="btn-secondary" id="log-btn">Log</button>
+            </div>
 
-            <div class="flex gap-4 justify-center mt-8">
-                <div class="w-3 h-3 rounded-full bg-[#ff3b30] cursor-pointer" onclick="setTheme('precision')"></div>
-                <div class="w-3 h-3 rounded-full bg-[#e67e5d] cursor-pointer" onclick="setTheme('budget')"></div>
-                <div class="w-3 h-3 rounded-full bg-[#00ff41] cursor-pointer" onclick="setTheme('matrix')"></div>
+            <div class="theme-selector">
+                <div class="theme-dot bg-[#050505] active" onclick="setTheme('precision', this)"></div>
+                <div class="theme-dot bg-[#ff3b30]" onclick="setTheme('red', this)"></div>
+                <div class="theme-dot bg-[#e2e4d8]" onclick="setTheme('vintage', this)"></div>
             </div>
         </div>
     </div>
 
     <script>
         const DIGITS = {
-            '0': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1],
+            '0': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,1,1,1,1],
             '1': [0,0,1,0,0, 0,1,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
             '2': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
             '3': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
             '4': [1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,0,1],
             '5': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
             '6': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
-            '7': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 0,1,0,0,0, 0,1,0,0,0],
+            '7': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 0,1,0,0,0],
             '8': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
             '9': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1]
         };
@@ -337,23 +380,27 @@
             initialMs: 0,
             isRunning: false,
             isBreak: false,
-            streak: 0,
             mins: 25,
             secs: 0,
-            lastTick: 0
+            lastTick: 0,
+            focusTotalMs: 0,
+            breakTotalMs: 0
         };
 
         const UI = {
             matrix: document.getElementById('matrix-display'),
-            progress: document.getElementById('progress-disk'),
-            balance: document.getElementById('balance-fill'),
-            streak: document.getElementById('streak-display'),
+            workBar: document.getElementById('balance-work'),
+            breakBar: document.getElementById('balance-break'),
+            workTime: document.getElementById('work-total'),
+            breakTime: document.getElementById('break-total'),
             status: document.getElementById('status-mode'),
             startBtn: document.getElementById('start-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            logBtn: document.getElementById('log-btn'),
             modeToggle: document.getElementById('mode-toggle'),
-            micBtn: document.getElementById('voice-input'),
             wheelMin: document.getElementById('wheel-min'),
-            wheelSec: document.getElementById('wheel-sec')
+            wheelSec: document.getElementById('wheel-sec'),
+            toast: document.getElementById('toast')
         };
 
         function createMatrix() {
@@ -374,14 +421,37 @@
                     UI.matrix.appendChild(colon);
                 }
             }
+            const sep = document.createElement('div');
+            sep.className = 'w-2 h-full flex items-end pb-2 opacity-20 text-[8px] font-bold';
+            sep.textContent = '.';
+            UI.matrix.appendChild(sep);
+            
+            for (let i = 0; i < 3; i++) {
+                const digit = document.createElement('div');
+                digit.className = 'matrix-digit mini';
+                for (let j = 0; j < 35; j++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    digit.appendChild(dot);
+                }
+                UI.matrix.appendChild(digit);
+            }
         }
 
-        function updateMatrix(timeStr) {
-            const cleanStr = timeStr.replace(':', '');
+        function updateMatrix() {
+            const totalSec = Math.floor(state.ms / 1000);
+            const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+            const s = (totalSec % 60).toString().padStart(2, '0');
+            const ms = (state.ms % 1000).toString().padStart(3, '0');
+            
+            const timeStr = m + s + ms;
             const digits = UI.matrix.querySelectorAll('.matrix-digit');
-            cleanStr.split('').forEach((char, idx) => {
+            
+            timeStr.split('').forEach((char, idx) => {
+                if (!digits[idx]) return;
                 const dots = digits[idx].querySelectorAll('.dot');
                 const map = DIGITS[char];
+                if (!map) return;
                 dots.forEach((dot, dIdx) => {
                     dot.classList.toggle('on', map[dIdx] === 1);
                 });
@@ -401,27 +471,37 @@
                 const index = Math.round(el.scrollTop / 40);
                 const items = track.querySelectorAll('.wheel-item');
                 items.forEach((item, i) => item.classList.toggle('active', i === index));
-                state[stateKey] = index;
-                if (!state.isRunning) {
-                    state.ms = (state.mins * 60 + state.secs) * 1000;
-                    render();
+                
+                if (state[stateKey] !== index) {
+                    state[stateKey] = index;
+                    if (!state.isRunning) {
+                        state.ms = (state.mins * 60 + state.secs) * 1000;
+                        render();
+                    }
                 }
             }, { passive: true });
         }
 
         function render() {
-            const totalSeconds = Math.ceil(state.ms / 1000);
-            const m = Math.floor(totalSeconds / 60);
-            const s = totalSeconds % 60;
-            const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            
-            updateMatrix(timeStr);
-            UI.streak.textContent = state.streak.toString().padStart(2, '0');
+            updateMatrix();
             UI.status.textContent = state.isRunning ? (state.isBreak ? 'BREAK' : 'FOCUS') : 'READY';
+            UI.workTime.textContent = formatSummaryTime(state.focusTotalMs);
+            UI.breakTime.textContent = formatSummaryTime(state.breakTotalMs);
             
-            const progress = state.initialMs > 0 ? (state.ms / state.initialMs) : 0;
-            UI.progress.style.strokeDashoffset = 911 - (progress * 911);
-            UI.balance.style.width = `${(1 - progress) * 100}%`;
+            const totalAccumulated = state.focusTotalMs + state.breakTotalMs;
+            if (totalAccumulated > 0) {
+                const focusPercent = (state.focusTotalMs / totalAccumulated) * 100;
+                UI.workBar.style.width = `${focusPercent}%`;
+                UI.breakBar.style.width = `${100 - focusPercent}%`;
+            } else {
+                UI.workBar.style.width = `50%`;
+                UI.breakBar.style.width = `50%`;
+            }
+        }
+
+        function formatSummaryTime(ms) {
+            const sTotal = Math.floor(ms / 1000);
+            return `${Math.floor(sTotal / 60).toString().padStart(2, '0')}:${(sTotal % 60).toString().padStart(2, '0')}`;
         }
 
         function timerLoop() {
@@ -429,15 +509,22 @@
             const now = performance.now();
             const delta = now - state.lastTick;
             state.lastTick = now;
+            
             state.ms = Math.max(0, state.ms - delta);
+            
+            if (state.isBreak) {
+                state.breakTotalMs += delta;
+            } else {
+                state.focusTotalMs += delta;
+            }
 
             if (state.ms <= 0) {
                 state.isRunning = false;
-                if (!state.isBreak) state.streak++;
                 UI.startBtn.textContent = "COMPLETE";
                 setTimeout(() => {
-                    UI.startBtn.textContent = "INITIATE";
+                    UI.startBtn.textContent = "START SESSION";
                     state.ms = (state.mins * 60 + state.secs) * 1000;
+                    state.initialMs = state.ms;
                     render();
                 }, 2000);
             }
@@ -451,8 +538,11 @@
                 state.isRunning = false;
                 UI.startBtn.textContent = "RESUME";
             } else {
-                state.ms = (state.mins * 60 + state.secs) * 1000;
-                state.initialMs = state.ms;
+                if (state.ms <= 0 || state.ms === (state.mins * 60 + state.secs) * 1000) {
+                    state.ms = (state.mins * 60 + state.secs) * 1000;
+                    state.initialMs = state.ms;
+                }
+                
                 if (state.ms > 0) {
                     state.isRunning = true;
                     state.lastTick = performance.now();
@@ -462,56 +552,72 @@
             }
         }
 
-        function setTheme(theme) {
-            document.body.classList.remove('theme-budget', 'theme-matrix');
-            if (theme !== 'precision') document.body.classList.add(`theme-${theme}`);
+        function handleReset() {
+            state.isRunning = false;
+            state.ms = (state.mins * 60 + state.secs) * 1000;
+            state.initialMs = state.ms;
+            UI.startBtn.textContent = "START SESSION";
+            render();
         }
 
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const speech = Recognition ? new Recognition() : null;
+        function handleLog() {
+            const log = `CHRONOS LOG - ${new Date().toLocaleDateString()}\nFOCUS: ${formatSummaryTime(state.focusTotalMs)}\nBREAK: ${formatSummaryTime(state.breakTotalMs)}`;
+            const temp = document.createElement('textarea');
+            temp.value = log;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            
+            UI.toast.classList.add('visible');
+            setTimeout(() => UI.toast.classList.remove('visible'), 2000);
+        }
 
-        if (speech) {
-            speech.onresult = (e) => {
-                const text = e.results[0][0].transcript.toLowerCase();
-                const num = text.match(/\d+/);
-                if (num) {
-                    const val = parseInt(num[0]);
-                    if (text.includes('minute')) {
-                        state.mins = val;
-                        UI.wheelMin.scrollTo({ top: val * 40, behavior: 'smooth' });
-                    } else if (text.includes('second')) {
-                        state.secs = val;
-                        UI.wheelSec.scrollTo({ top: val * 40, behavior: 'smooth' });
-                    }
-                    state.ms = (state.mins * 60 + state.secs) * 1000;
-                    render();
-                }
-                UI.micBtn.classList.remove('listening');
-            };
+        function setTheme(theme, el) {
+            document.body.classList.remove('theme-red', 'theme-vintage');
+            if (theme !== 'precision') document.body.classList.add(`theme-${theme}`);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            if (el) el.classList.add('active');
         }
 
         UI.startBtn.addEventListener('click', handleStart);
+        UI.resetBtn.addEventListener('click', handleReset);
+        UI.logBtn.addEventListener('click', handleLog);
         UI.modeToggle.addEventListener('click', () => {
             state.isBreak = !state.isBreak;
             UI.modeToggle.classList.toggle('is-break', state.isBreak);
+            state.ms = (state.mins * 60 + state.secs) * 1000;
+            state.initialMs = state.ms;
             render();
         });
+
+      window.onload = () => {
+    createMatrix();
+    buildWheel(UI.wheelMin, 100, 'mins');
+    buildWheel(UI.wheelSec, 60, 'secs');
+
+    // Parse URL parameters: ?m=25&s=0
+    const params = new URLSearchParams(window.location.search);
+    const m = parseInt(params.get('m'));
+    const s = parseInt(params.get('s'));
+
+    setTimeout(() => {
+        const targetMin = !isNaN(m) ? m : 25;
+        const targetSec = !isNaN(s) ? s : 0;
         
-        UI.micBtn.addEventListener('click', () => {
-            if (speech) {
-                UI.micBtn.classList.add('listening');
-                speech.start();
-            }
-        });
+        UI.wheelMin.scrollTo({ top: targetMin * 40 });
+        UI.wheelSec.scrollTo({ top: targetSec * 40 });
+        
+        state.mins = targetMin;
+        state.secs = targetSec;
+        state.ms = (targetMin * 60 + targetSec) * 1000;
+        state.initialMs = state.ms;
+        
+        render();
 
-        document.getElementById('tap-target').addEventListener('click', handleStart);
-
-        window.onload = () => {
-            createMatrix();
-            buildWheel(UI.wheelMin, 100, 'mins');
-            buildWheel(UI.wheelSec, 60, 'secs');
-            UI.wheelMin.scrollTo({ top: 25 * 40 });
-            render();
+        // Auto-start if parameters are present
+        if (!isNaN(m)) handleStart();
+    }, 100)
         };
     </script>
 </body>

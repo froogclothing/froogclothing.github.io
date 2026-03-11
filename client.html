@@ -284,6 +284,7 @@
             const [inputText, setInputText] = useState('');
             const [status, setStatus] = useState('Auth: Initializing');
             const listRef = useRef(null);
+            const messageSentRef = useRef(false);
 
             const handleSend = async (manualText) => {
                 const textToSend = manualText || inputText;
@@ -308,7 +309,6 @@
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const roomParam = params.get('room');
-                const mesParam = params.get('mes');
                 
                 if (roomParam && roomParam.length === 4 && /^\d+$/.test(roomParam)) {
                     setRoomDigits(roomParam);
@@ -333,17 +333,25 @@
                     setUser(currentUser);
                     if (currentUser) {
                         setStatus(`Auth: Active (${currentUser.uid.substring(0,6)})`);
-                        if (mesParam && roomParam) {
-                            handleSend(mesParam);
-                            // Clear mes param from URL to prevent duplicate sends on refresh
-                            const newUrl = new URL(window.location.href);
-                            newUrl.searchParams.delete('mes');
-                            window.history.replaceState({}, '', newUrl);
-                        }
                     }
                 });
                 return () => unsubscribe();
             }, []);
+
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const roomParam = params.get('room');
+                const mesParam = params.get('mes');
+
+                if (user && activeRoom && mesParam && !messageSentRef.current) {
+                    messageSentRef.current = true;
+                    handleSend(mesParam);
+                    
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.delete('mes');
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }, [user, activeRoom]);
 
             useEffect(() => {
                 if (!user || !activeRoom) return;

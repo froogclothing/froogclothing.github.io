@@ -340,7 +340,6 @@
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
-                const roomParam = params.get('room');
                 const mesParam = params.get('mes');
 
                 if (user && activeRoom && mesParam && !messageSentRef.current) {

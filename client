@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ash Precision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .app-root {
+            --bg: #050505;
+            --text: #ffffff;
+            --accent: #ffffff;
+            --panel: #121212;
+            --panel-text: #ffffff;
+            --dot-dim: rgba(255, 255, 255, 0.05);
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.6s var(--ease-out-expo), color 0.6s var(--ease-out-expo);
+        }
+        
+        .app-root.theme-red {
+            --bg: #ff3b30;
+            --panel: #ffffff;
+            --panel-text: #ff3b30;
+            --dot-dim: rgba(255, 255, 255, 0.2);
+        }
+        
+        .app-root.theme-vintage {
+            --bg: #e2e4d8;
+            --text: #2d2d2a;
+            --accent: #e67e5d;
+            --panel: #2d2d2a;
+            --panel-text: #e2e4d8;
+            --dot-dim: rgba(45, 45, 42, 0.08);
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            height: 100%;
+            padding: env(safe-area-inset-top) 24px 0;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .matrix-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.05));
+        }
+        
+        .matrix-digit {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            width: 38px;
+        }
+        
+        .dot {
+            aspect-ratio: 1/1;
+            width: 100%;
+            border-radius: 1px;
+            background: var(--dot-dim);
+            transition: background 0.1s linear, box-shadow 0.1s linear;
+        }
+        
+        .dot.on {
+            background: var(--text);
+            box-shadow: 0 0 8px var(--text);
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .key-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--panel-text);
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 18px;
+            transition: all 0.1s;
+        }
+
+        .key-btn:active {
+            background: var(--panel-text);
+            color: var(--panel);
+            transform: scale(0.95);
+        }
+        
+        .message-list {
+            overflow-y: auto;
+            padding: 20px 0;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 40px;
+        }
+        
+        .message-list::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .message-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideUp 0.3s var(--ease-out-expo) forwards;
+        }
+        
+        .message-item.is-mine {
+            border-right: 3px solid var(--text);
+            background: rgba(255, 255, 255, 0.06);
+            align-items: flex-end;
+            text-align: right;
+        }
+        
+        .message-header {
+            font-size: 10px;
+            font-weight: 800;
+            opacity: 0.5;
+            letter-spacing: 0.1em;
+        }
+        
+        .message-text {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        
+        .control-panel {
+            background: var(--panel);
+            border-radius: 32px 32px 0 0;
+            color: var(--panel-text);
+            padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+            margin: 0 -24px;
+            box-shadow: 0 -20px 50px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .panel-input {
+            background: rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.1);
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            color: var(--panel-text);
+            font-family: inherit;
+            font-weight: 700;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        
+        .theme-selector {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        
+        .theme-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .theme-dot.active { border-color: var(--panel-text); }
+        
+        #status-bar {
+            position: fixed;
+            bottom: 4px;
+            right: 10px;
+            font-size: 8px;
+            opacity: 0.3;
+            text-transform: uppercase;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp, updateDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const { useState, useEffect, useRef } = React;
+
+        const fallbackConfig = {
+            apiKey: "AIzaSyBai5LF1q1gChBA8Vy4AfBn5AlJTHPjpoM",
+            authDomain: "awesome-ecosystem.firebaseapp.com",
+            projectId: "awesome-ecosystem",
+            storageBucket: "awesome-ecosystem.firebasestorage.app",
+            messagingSenderId: "303617390063",
+            appId: "1:303617390063:web:e4d077c5a72cad4064721a"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const finalAppId = typeof __app_id !== 'undefined' ? __app_id : 'ash-precision';
+
+        const DIGITS = {
+            '0': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,1,1,1,1],
+            '1': [0,0,1,0,0, 0,1,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
+            '2': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
+            '3': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '4': [1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,0,1],
+            '5': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '6': [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '7': [1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 0,1,0,0,0],
+            '8': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1],
+            '9': [1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1, 0,0,0,0,1, 0,0,0,0,1, 1,1,1,1,1],
+            '-': [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 1,1,1,1,1, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0]
+        };
+
+        const MatrixDigit = ({ char }) => {
+            const map = DIGITS[char] || DIGITS['-'];
+            return (
+                <div className="matrix-digit">
+                    {map.map((val, i) => (
+                        <div key={i} className={`dot ${val ? 'on' : ''}`} />
+                    ))}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('auth'); 
+            const [roomDigits, setRoomDigits] = useState('');
+            const [activeRoom, setActiveRoom] = useState(null);
+            const [messages, setMessages] = useState([]);
+            const [user, setUser] = useState(null);
+            const [theme, setTheme] = useState('precision');
+            const [inputText, setInputText] = useState('');
+            const [status, setStatus] = useState('Auth: Initializing');
+            const listRef = useRef(null);
+
+            const handleSend = async (manualText) => {
+                const textToSend = manualText || inputText;
+                if (!textToSend.trim() || !user || !activeRoom) return;
+                setInputText('');
+                
+                try {
+                    const msgRef = doc(collection(db, 'artifacts', finalAppId, 'public', 'data', 'messages'));
+                    await setDoc(msgRef, {
+                        text: textToSend.trim(),
+                        type: 'message',
+                        senderName: `OPERATIVE-${user.uid.substring(0, 4).toUpperCase()}`,
+                        userId: user.uid,
+                        roomId: activeRoom,
+                        createdAt: serverTimestamp()
+                    });
+                } catch (err) {
+                    console.error("Transmission failed:", err);
+                }
+            };
+
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const roomParam = params.get('room');
+                const mesParam = params.get('mes');
+                
+                if (roomParam && roomParam.length === 4 && /^\d+$/.test(roomParam)) {
+                    setRoomDigits(roomParam);
+                    setActiveRoom(roomParam);
+                    setView('chat');
+                }
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (err) {
+                        setStatus("Auth: Connection Blocked");
+                    }
+                };
+                initAuth();
+                
+                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                    setUser(currentUser);
+                    if (currentUser) {
+                        setStatus(`Auth: Active (${currentUser.uid.substring(0,6)})`);
+                        if (mesParam && roomParam) {
+                            handleSend(mesParam);
+                            // Clear mes param from URL to prevent duplicate sends on refresh
+                            const newUrl = new URL(window.location.href);
+                            newUrl.searchParams.delete('mes');
+                            window.history.replaceState({}, '', newUrl);
+                        }
+                    }
+                });
+                return () => unsubscribe();
+            }, []);
+
+            useEffect(() => {
+                if (!user || !activeRoom) return;
+                
+                const q = collection(db, 'artifacts', finalAppId, 'public', 'data', 'messages');
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    const msgs = snapshot.docs
+                        .map(doc => ({ id: doc.id, ...doc.data() }))
+                        .filter(m => m.roomId === activeRoom)
+                        .sort((a, b) => {
+                            const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0);
+                            const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0);
+                            return tA - tB;
+                        });
+                    setMessages(msgs);
+                });
+                
+                return () => unsubscribe();
+            }, [user, activeRoom]);
+
+            useEffect(() => {
+                if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+            }, [messages]);
+
+            const handleDigitPress = (digit) => {
+                if (roomDigits.length >= 4) return;
+                const next = roomDigits + digit;
+                setRoomDigits(next);
+                if (next.length === 4) {
+                    setTimeout(() => {
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('room', next);
+                        window.history.pushState({}, '', newUrl);
+                        setActiveRoom(next);
+                        setView('chat');
+                    }, 400);
+                }
+            };
+
+            const displaySequence = roomDigits.padEnd(4, '-');
+
+            if (view === 'auth') {
+                return (
+                    <div className={`app-root theme-${theme}`}>
+                        <div className="main-container">
+                            <header className="flex flex-col items-center pt-12 pb-4">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-40 mb-2">Ash Access Protocol</div>
+                                <div className="text-[8px] font-black uppercase tracking-widest opacity-20">Secure Room Handshake</div>
+                            </header>
+                            <div className="matrix-display py-8">
+                                <MatrixDigit char={displaySequence[0]} />
+                                <MatrixDigit char={displaySequence[1]} />
+                                <MatrixDigit char={displaySequence[2]} />
+                                <MatrixDigit char={displaySequence[3]} />
+                            </div>
+                            <div className="keypad-grid px-8">
+                                {[1,2,3,4,5,6,7,8,9].map(n => (
+                                    <button key={n} onClick={() => handleDigitPress(n.toString())} className="key-btn">{n}</button>
+                                ))}
+                                <button onClick={() => setRoomDigits('')} className="key-btn text-[10px]">CLR</button>
+                                <button onClick={() => handleDigitPress('0')} className="key-btn">0</button>
+                                <button onClick={() => setRoomDigits(prev => prev.slice(0,-1))} className="key-btn text-[10px]">DEL</button>
+                            </div>
+                            <div className="theme-selector pb-12">
+                                <div className={`theme-dot bg-[#050505] ${theme === 'precision' ? 'active' : ''}`} onClick={() => setTheme('precision')} />
+                                <div className={`theme-dot bg-[#ff3b30] ${theme === 'red' ? 'active' : ''}`} onClick={() => setTheme('red')} />
+                                <div className={`theme-dot bg-[#e2e4d8] ${theme === 'vintage' ? 'active' : ''}`} onClick={() => setTheme('vintage')} />
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={`app-root theme-${theme}`}>
+                    <div className="main-container">
+                        <header className="flex justify-between items-center pt-8 pb-4">
+                            <button onClick={() => { setView('auth'); setRoomDigits(''); window.history.pushState({}, '', window.location.pathname); }} className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">&lt; SECURE EXIT</button>
+                            <div className="text-[10px] font-black uppercase tracking-[0.5em] opacity-80">ROOM {activeRoom}</div>
+                        </header>
+                        <div className="matrix-display">
+                            <MatrixDigit char={activeRoom[0]} />
+                            <MatrixDigit char={activeRoom[1]} />
+                            <MatrixDigit char={activeRoom[2]} />
+                            <MatrixDigit char={activeRoom[3]} />
+                        </div>
+                        <div className="message-list" ref={listRef}>
+                            {messages.map((msg) => {
+                                const isMine = msg.userId === user?.uid;
+                                return (
+                                    <div key={msg.id} className={`message-item ${isMine ? 'is-mine' : ''}`}>
+                                        <div className="message-header">{msg.senderName}</div>
+                                        <div className="message-text">{msg.text?.toUpperCase()}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="control-panel">
+                            <input
+                                type="text"
+                                className="panel-input"
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                placeholder="TRANSMIT DATA..."
+                                autoComplete="off"
+                            />
+                            <button 
+                                onClick={() => handleSend()}
+                                className="bg-[var(--panel-text)] text-[var(--panel)] w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-[0.98] transition-transform"
+                            >
+                                Transmit Sequence
+                            </button>
+                        </div>
+                    </div>
+                    <div id="status-bar">{status}</div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
